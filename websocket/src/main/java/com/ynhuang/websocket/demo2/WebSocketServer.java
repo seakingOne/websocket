@@ -50,9 +50,13 @@ public class WebSocketServer {
     @OnOpen
     public void onOpen(@PathParam("userId") String userId ,
                        Session session){
+
         log.info("[WebSocketServer] Connected : userId = "+ userId);
-        //当前session最大文件传输大小
+
+        //1 当前session最大文件传输大小
         session.setMaxBinaryMessageBufferSize(2 * 1024 * 1024);
+
+        //2 添加进入聊天室的用户
         WebSocketUtils.add(userId , session);
     }
 
@@ -63,15 +67,21 @@ public class WebSocketServer {
     public String onMessage(@PathParam("userId") String userId,
                             String message,Session session) throws IOException {
 
+        //1 消息实体类转换
         Message messageObject = new ObjectMapper().readValue(message, Message.class);
 
         log.info("[WebSocketServer] Received Message : userId = "+ userId + " , message = " + messageObject.toString());
+
+        //2 消息处理
+        //2.1 心跳
         if (messageObject.getMsg().equals("heart")){
             return "heart";
         }else{
-            log.info("进入非心跳消息....");
+
+            //2.2 打印收取的信息 展示当前在线人数
             WebSocketUtils.receive(userId , message);
-            //给指定人发送消息
+
+            //2.3 给指定用户发送消息
             if( messageObject.getReceiver() != 0) {
                 Map<String, Session> clients = WebSocketUtils.getClients();
                 if (clients.get(String.valueOf(messageObject.getReceiver())) != null) {
@@ -79,10 +89,11 @@ public class WebSocketServer {
                     return "Got your message (" + message.toString() + ").";
                 } else {
                     log.error("当前用户没有连接!");
-                    return "error，当前用户没有连接";
+                    return "当前用户没有连接";
                 }
             }
 
+            //2.4 获取上传的文件名称
             this.fileName = messageObject.getMsg().split(": fileStart")[0];
 
             return "获取到文件名:" + messageObject.getMsg();
@@ -94,21 +105,21 @@ public class WebSocketServer {
     public void onMessage(@PathParam("userId") String userId,
                             ByteBuffer message, Session session) throws IOException {
 
-        //String file = new String(message.array(), "utf-8");
-
+        //1 存储文件到服务器路径
         File newFile = new File("E://ynhuang//image//" + fileName);
 
+        //2 输入流
         FileOutputStream fe = new FileOutputStream(newFile,true);
 
-        //返回信息
-        String resultStr="success";
-        //发送字符串信息的 byte数组
-        ByteBuffer bf=ByteBuffer.wrap(resultStr.getBytes("utf-8"));
-        session.getBasicRemote().sendBinary(bf);
-
+        //3 写文件
         fe.write(message.array());
         fe.flush();
         fe.close();
+
+        //4 返回信息
+        String resultStr="success";
+        ByteBuffer bf=ByteBuffer.wrap(resultStr.getBytes("utf-8"));
+        session.getBasicRemote().sendBinary(bf);
 
     }
 
