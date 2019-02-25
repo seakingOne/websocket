@@ -1,12 +1,15 @@
 package com.ynhuang.websocket.demo2;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 
 import javax.websocket.*;
 import javax.websocket.server.PathParam;
 import javax.websocket.server.ServerEndpoint;
+import java.io.File;
+import java.io.FileOutputStream;
 import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.util.Map;
@@ -38,6 +41,9 @@ import java.util.Map;
 @Component
 public class WebSocketServer {
 
+    @Getter
+    private String fileName;
+
     /*
  New Connected
   */
@@ -45,6 +51,8 @@ public class WebSocketServer {
     public void onOpen(@PathParam("userId") String userId ,
                        Session session){
         log.info("[WebSocketServer] Connected : userId = "+ userId);
+        //当前session最大文件传输大小
+        session.setMaxBinaryMessageBufferSize(2 * 1024 * 1024);
         WebSocketUtils.add(userId , session);
     }
 
@@ -53,7 +61,7 @@ public class WebSocketServer {
      */
     @OnMessage
     public String onMessage(@PathParam("userId") String userId,
-                            String message) throws IOException {
+                            String message,Session session) throws IOException {
 
         Message messageObject = new ObjectMapper().readValue(message, Message.class);
 
@@ -64,24 +72,43 @@ public class WebSocketServer {
             log.info("进入非心跳消息....");
             WebSocketUtils.receive(userId , message);
             //给指定人发送消息
-            Map<String, Session> clients = WebSocketUtils.getClients();
-            if(clients.get(String.valueOf(messageObject.getReceiver())) != null){
-                WebSocketUtils.sendMessage(String.valueOf(messageObject.getReceiver()), message);
-                return "Got your message ("+ message.toString() +").";
-            } else {
-                log.error("当前用户没有连接!");
-                return "error，当前用户没有连接";
+            if( messageObject.getReceiver() != 0) {
+                Map<String, Session> clients = WebSocketUtils.getClients();
+                if (clients.get(String.valueOf(messageObject.getReceiver())) != null) {
+                    WebSocketUtils.sendMessage(String.valueOf(messageObject.getReceiver()), message);
+                    return "Got your message (" + message.toString() + ").";
+                } else {
+                    log.error("当前用户没有连接!");
+                    return "error，当前用户没有连接";
+                }
             }
+
+            this.fileName = messageObject.getMsg().split(": fileStart")[0];
+
+            return "获取到文件名:" + messageObject.getMsg();
 
         }
     }
 
     @OnMessage
-    public String onMessage(@PathParam("userId") String userId,
-                            ByteBuffer message){
+    public void onMessage(@PathParam("userId") String userId,
+                            ByteBuffer message, Session session) throws IOException {
 
+        //String file = new String(message.array(), "utf-8");
 
-        return "";
+        File newFile = new File("E://ynhuang//image//" + fileName);
+
+        FileOutputStream fe = new FileOutputStream(newFile,true);
+
+        //返回信息
+        String resultStr="success";
+        //发送字符串信息的 byte数组
+        ByteBuffer bf=ByteBuffer.wrap(resultStr.getBytes("utf-8"));
+        session.getBasicRemote().sendBinary(bf);
+
+        fe.write(message.array());
+        fe.flush();
+        fe.close();
 
     }
 
