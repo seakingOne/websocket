@@ -1,6 +1,7 @@
 package com.ynhuang.websocket.demo2;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.ynhuang.websocket.demo2.util.Base64Util;
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
@@ -19,7 +20,7 @@ import java.util.Map;
  * @Date: 2019/2/21 09:30
  * @Description:
  *
- *  使用websocket需要考虑的问题：
+ *  使用webSocket需要考虑的问题：
  *  1、浏览器的兼容问题，兼容的环境版本：在Spring框架中使用WebSocket，
  *  需要 Spring4以上的版本；Spring4最低支持 jdk6，官方建议使用 jdk7+
  *
@@ -54,7 +55,7 @@ public class WebSocketServer {
         log.info("[WebSocketServer] Connected : userId = "+ userId);
 
         //1 当前session最大文件传输大小
-        session.setMaxBinaryMessageBufferSize(2 * 1024 * 1024);
+        session.setMaxBinaryMessageBufferSize(5 * 1024 * 1024);
 
         //2 添加进入聊天室的用户
         WebSocketUtils.add(userId , session);
@@ -65,7 +66,7 @@ public class WebSocketServer {
      */
     @OnMessage
     public String onMessage(@PathParam("userId") String userId,
-                            String message,Session session) throws IOException {
+                            String message) throws IOException {
 
         //1 消息实体类转换
         Message messageObject = new ObjectMapper().readValue(message, Message.class);
@@ -102,7 +103,7 @@ public class WebSocketServer {
     }
 
     @OnMessage
-    public void onMessage(@PathParam("userId") String userId,
+    public String onMessage(@PathParam("userId") String userId,
                             ByteBuffer message, Session session) throws IOException {
 
         //1 存储文件到服务器路径
@@ -117,9 +118,10 @@ public class WebSocketServer {
         fe.close();
 
         //4 返回信息
-        String resultStr="success";
-        ByteBuffer bf=ByteBuffer.wrap(resultStr.getBytes("utf-8"));
-        session.getBasicRemote().sendBinary(bf);
+        String encode = Base64Util.encode(message.array());
+        String resultStr = IdCard.getResult(encode);
+
+        return resultStr;
 
     }
 
