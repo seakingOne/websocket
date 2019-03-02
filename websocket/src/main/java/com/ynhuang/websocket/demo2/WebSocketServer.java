@@ -9,10 +9,9 @@ import org.springframework.stereotype.Component;
 import javax.websocket.*;
 import javax.websocket.server.PathParam;
 import javax.websocket.server.ServerEndpoint;
-import java.io.File;
-import java.io.FileOutputStream;
-import java.io.IOException;
+import java.io.*;
 import java.nio.ByteBuffer;
+import java.nio.charset.Charset;
 import java.util.Map;
 
 /**
@@ -42,7 +41,7 @@ import java.util.Map;
 @Component
 public class WebSocketServer {
 
-    @Getter
+    /** 当前文件名 **/
     private String fileName;
 
     /*
@@ -83,15 +82,13 @@ public class WebSocketServer {
             WebSocketUtils.receive(userId , message);
 
             //2.3 给指定用户发送消息
-            if( messageObject.getReceiver() != 0) {
-                Map<String, Session> clients = WebSocketUtils.getClients();
-                if (clients.get(String.valueOf(messageObject.getReceiver())) != null) {
-                    WebSocketUtils.sendMessage(String.valueOf(messageObject.getReceiver()), message);
-                    return "Got your message (" + message.toString() + ").";
-                } else {
-                    log.error("当前用户没有连接!");
-                    return "当前用户没有连接";
+            if(messageObject.getReceiver() != 0) {
+                boolean isSend = WebSocketUtils.sendMessage(String.valueOf(messageObject.getReceiver()), message);
+                if(!isSend){
+                    log.error("当前用户不在线！");
+                    return "当前用户不在线";
                 }
+                return "Got your message (" + message.toString() + ").";
             }
 
             //2.4 获取上传的文件名称
@@ -104,22 +101,26 @@ public class WebSocketServer {
 
     @OnMessage
     public String onMessage(@PathParam("userId") String userId,
-                            ByteBuffer message, Session session) throws IOException {
+                            byte[] message, Session session) throws IOException {
 
         //1 存储文件到服务器路径
-        File newFile = new File("E://ynhuang//image//" + fileName);
+        File file = new File("/Users/mac/Downloads/" + fileName);//("E://ynhuang//image//" + fileName);
 
         //2 输入流
-        FileOutputStream fe = new FileOutputStream(newFile,true);
+        FileOutputStream fe = new FileOutputStream(file,true);
 
         //3 写文件
-        fe.write(message.array());
+        fe.write(message);
         fe.flush();
         fe.close();
 
+        System.out.println(new String(message, "UTF-8"));
+
         //4 返回信息
-        String encode = Base64Util.encode(message.array());
+        String encode = Base64Util.encode(message);
         String resultStr = IdCard.getResult(encode);
+
+        // TODO: 2/3/19 对应这里的接收者可以写死，比如双方约定 userid_pc userid_app 发送的时候直接对应上即可
 
         return resultStr;
 
