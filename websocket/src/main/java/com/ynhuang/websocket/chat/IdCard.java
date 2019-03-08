@@ -1,9 +1,7 @@
-package com.ynhuang.websocket.demo2;
+package com.ynhuang.websocket.chat;
 
-import com.ynhuang.websocket.demo2.util.AuthService;
-import com.ynhuang.websocket.demo2.util.Base64Util;
-import com.ynhuang.websocket.demo2.util.FileUtil;
-import com.ynhuang.websocket.demo2.util.HttpUtil;
+import com.ynhuang.websocket.chat.util.AuthService;
+import com.ynhuang.websocket.chat.util.HttpUtil;
 
 import java.net.URLEncoder;
 

@@ -1,7 +1,7 @@
 /*
  * Copyright (C) 2017 Baidu, Inc. All Rights Reserved.
  */
-package com.ynhuang.websocket.demo2.util;
+package com.ynhuang.websocket.chat.util;
 
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;

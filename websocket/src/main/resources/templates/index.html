@@ -57,7 +57,7 @@
             if(window.WebSocket){
                 if(chat.webSocket == null){
                     chat.roomName = document.getElementById("input_roomName").value;
-                    chat.webSocket = new WebSocket("ws://10.32.41.222:8080/webSocket/chat/" + chat.roomName);
+                    chat.webSocket = new WebSocket("ws://10.32.41.222:8080/chat/webSocket/chat/" + chat.roomName);
                 }else {
                     alert("您已进入聊天室...");
                 }

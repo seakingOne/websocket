@@ -21,7 +21,7 @@
                 if(window.WebSocket){
                     if(CHAT.socket == null){
                         var userId = $("#userId").val();
-                        CHAT.socket = new WebSocket("ws://localhost:8080/chat/" + userId);
+                        CHAT.socket = new WebSocket("ws://10.32.41.222:8080/chat/" + userId);
                     }else{
                         console.log("请不要重复连接");
                     }

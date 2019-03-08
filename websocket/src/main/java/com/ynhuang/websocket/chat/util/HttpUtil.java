@@ -1,4 +1,4 @@
-package com.ynhuang.websocket.demo2.util;
+package com.ynhuang.websocket.chat.util;
 
 import java.io.BufferedReader;
 import java.io.DataOutputStream;
